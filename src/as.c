@@ -13,36 +13,36 @@ char parseHexDigit(char digit) {
   return 0;
 }
 
-char decodeLine(char *nme, char hex) {
+char decodeLine(char *mne, char hex) {
 
-  if (!strcmp(nme, "NOP")) return NOP;
+  if (!strcmp(mne, "NOP")) return NOP;
 
-  if (!strcmp(nme, "LDA")) return LDA | (hex & 0xF);
+  if (!strcmp(mne, "LDA")) return LDA | (hex & 0xF);
 
-  if (!strcmp(nme, "ADD")) return ADD | (hex & 0xF);
+  if (!strcmp(mne, "ADD")) return ADD | (hex & 0xF);
 
-  if (!strcmp(nme, "SUB")) return SUB | (hex & 0xF);
+  if (!strcmp(mne, "SUB")) return SUB | (hex & 0xF);
 
-  if (!strcmp(nme, "STA")) return STA | (hex & 0xF);
+  if (!strcmp(mne, "STA")) return STA | (hex & 0xF);
 
-  if (!strcmp(nme, "LDI")) return LDI | (hex & 0xF);
+  if (!strcmp(mne, "LDI")) return LDI | (hex & 0xF);
 
-  if (!strcmp(nme, "JMP")) return JMP | (hex & 0xF);
+  if (!strcmp(mne, "JMP")) return JMP | (hex & 0xF);
 
-  if (!strcmp(nme, "OUT")) return OPT;
+  if (!strcmp(mne, "OUT")) return OPT;
 
-  if (!strcmp(nme, "HLT")) return HLT;
-
+  if (!strcmp(mne, "HLT")) return HLT;
+  
+  // Need to return something as there are no exceptions
+  return NOP;
 }
 
 void assemble(FILE *in, FILE *out) {
-  char nme[4] = { 0 };
+  char mne[4] = { 0 };
   char hex = 0;
-  while(fscanf(in, "%3s %2hhXH", nme, &hex) != EOF) {
-    char byte = decodeLine(nme, hex);
-    if (byte) {
-      fputc(byte, out);
-    }
+  while(fscanf(in, "%3s %2hhXH", mne, &hex) != EOF) {
+    char byte = decodeLine(mne, hex);
+    fputc(byte, out);
   }
 }
 
