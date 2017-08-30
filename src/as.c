@@ -13,36 +13,90 @@ char parseHexDigit(char digit) {
   return 0;
 }
 
-char decodeLine(char *nme, char hex) {
+int writeMne(char mne, FILE *out) {
+  fputc(mne, out);
+  return 1;
+}
+int writeMneImmediate(char mne, char hex, FILE *out) {
+  fputc(mne, out);
+  fputc(hex, out);
+  return 2;
+}
+int writeMneAddress(char mne, short hex, FILE *out) {
+  fputc(mne, out);
+  fputc(hex & 0xFF, out);
+  fputc(hex >> 8, out);
+  return 3;
+}
 
-  if (!strcmp(nme, "NOP")) return NOP;
+int decodeLine(char *mne, char *mod, short hex, FILE *out) {
 
-  if (!strcmp(nme, "LDA")) return LDA | (hex & 0xF);
+  if (!strcmp(mne, "NOP")) return fputc(NOP, out);
 
-  if (!strcmp(nme, "ADD")) return ADD | (hex & 0xF);
+  if (!strcmp(mne, "LDA")) return writeMneAddress(LDA, hex, out);
 
-  if (!strcmp(nme, "SUB")) return SUB | (hex & 0xF);
+  if (!strcmp(mne, "ADD")){
+    if(mod[0] == 'B') return fputc(ADD_B, out);
+    if(mod[0] == 'C') return fputc(ADD_C, out);
+    return 0;
+  }
 
-  if (!strcmp(nme, "STA")) return STA | (hex & 0xF);
+  if (!strcmp(mne, "SUB")) {
+    if(mod[0] == 'B') return fputc(SUB_B, out);
+    if(mod[0] == 'C') return fputc(SUB_C, out);
+    return 0;
+  }
 
-  if (!strcmp(nme, "LDI")) return LDI | (hex & 0xF);
+  if (!strcmp(mne, "STA")) return writeMneAddress(STA, hex, out);
 
-  if (!strcmp(nme, "JMP")) return JMP | (hex & 0xF);
+  if (!strcmp(mne, "MVI")) {
+    if(mod[0] == 'A') return writeMneImmediate(MVI_A, hex, out);
+    if(mod[0] == 'B') return writeMneImmediate(MVI_B, hex, out);
+    if(mod[0] == 'C') return writeMneImmediate(MVI_C, hex, out);
+    return 0;
+  }
+  if (!strcmp(mne, "MOV")) {
+    if(!strcmp(mod, "A,B")) return fputc(MOV_AB, out);
+    if(!strcmp(mod, "A,C")) return fputc(MOV_AC, out);
+    if(!strcmp(mod, "B,A")) return fputc(MOV_BA, out);
+    if(!strcmp(mod, "B,C")) return fputc(MOV_BC, out);
+    if(!strcmp(mod, "C,A")) return fputc(MOV_CA, out);
+    if(!strcmp(mod, "C,B")) return fputc(MOV_CB, out);
+    return 0;
+  }
 
-  if (!strcmp(nme, "OUT")) return OPT;
+  if (!strcmp(mne, "JMP")) return writeMneAddress(JMP, hex, out);
 
-  if (!strcmp(nme, "HLT")) return HLT;
+  if (!strcmp(mne, "OUT")) return writeMneImmediate(_OUT, hex, out);
 
+  if (!strcmp(mne, "HLT")) return fputc(HLT, out);
+
+  return 0;
 }
 
 void assemble(FILE *in, FILE *out) {
-  char nme[4] = { 0 };
-  char hex = 0;
-  while(fscanf(in, "%3s %2hhXH", nme, &hex) != EOF) {
-    char byte = decodeLine(nme, hex);
-    if (byte) {
-      fputc(byte, out);
+  char line[255];
+  char mne[4] = { 0 };
+  char mod[4] = { 0 };
+  short hex = 0;
+  int scan = 0;
+  while(fgets(line, 255, in) != NULL) {
+    scan = sscanf(line, "%3s %[ABC,]%2hXH", mne, mod, &hex);
+    if(scan == 3) {
+      decodeLine(mne, mod, hex, out);
+      continue;
     }
+    scan = sscanf(line, "%3s %4hXH", mne, &hex);
+    if(scan == 2) {
+      decodeLine(mne, mod, hex, out);
+      continue;
+    }
+    scan = sscanf(line, "%3s %[ABC,]", mne, mod);
+    if(scan == 2) {
+      decodeLine(mne, mod, hex, out);
+      continue;
+    }
+
   }
 }
 
