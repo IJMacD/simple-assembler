@@ -67,6 +67,10 @@ int decodeLine(char *mne, char *mod, short hex, FILE *out) {
 
   if (!strcmp(mne, "JMP")) return writeMneAddress(JMP, hex, out);
 
+  if (!strcmp(mne, "JZ")) return writeMneAddress(_JZ, hex, out);
+
+  if (!strcmp(mne, "JNZ")) return writeMneAddress(JNZ, hex, out);
+
   if (!strcmp(mne, "OUT")) return writeMneImmediate(_OUT, hex, out);
 
   if (!strcmp(mne, "HLT")) return fputc(HLT, out);
@@ -92,7 +96,7 @@ void assemble(FILE *in, FILE *out) {
       continue;
     }
     scan = sscanf(line, "%3s %[ABC,]", mne, mod);
-    if(scan == 2) {
+    if(scan > 0) {
       decodeLine(mne, mod, hex, out);
       continue;
     }
