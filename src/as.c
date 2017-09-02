@@ -47,6 +47,44 @@ int decodeLine(char *mne, char *mod, short hex, FILE *out) {
     return 0;
   }
 
+  if (!strcmp(mne, "INR")) {
+    if(mod[0] == 'A') return fputc(INR_A, out);
+    if(mod[0] == 'B') return fputc(INR_B, out);
+    if(mod[0] == 'C') return fputc(INR_C, out);
+    return 0;
+  }
+
+  if (!strcmp(mne, "DCR")) {
+    if(mod[0] == 'A') return fputc(DCR_A, out);
+    if(mod[0] == 'B') return fputc(DCR_B, out);
+    if(mod[0] == 'C') return fputc(DCR_C, out);
+    return 0;
+  }
+
+  if (!strcmp(mne, "CMA")) return fputc(CMA, out);
+
+  if (!strcmp(mne, "RAL")) return fputc(RAL, out);
+
+  if (!strcmp(mne, "RAR")) return fputc(RAR, out);
+
+  if (!strcmp(mne, "ANA")) {
+    if(mod[0] == 'B') return fputc(ANA_B, out);
+    if(mod[0] == 'C') return fputc(ANA_C, out);
+    return 0;
+  }
+
+  if (!strcmp(mne, "XRA")) {
+    if(mod[0] == 'B') return fputc(XRA_B, out);
+    if(mod[0] == 'C') return fputc(XRA_C, out);
+    return 0;
+  }
+
+  if (!strcmp(mne, "ORA")) {
+    if(mod[0] == 'B') return fputc(ORA_B, out);
+    if(mod[0] == 'C') return fputc(ORA_C, out);
+    return 0;
+  }
+
   if (!strcmp(mne, "STA")) return writeMneAddress(STA, hex, out);
 
   if (!strcmp(mne, "MVI")) {
@@ -55,6 +93,7 @@ int decodeLine(char *mne, char *mod, short hex, FILE *out) {
     if(mod[0] == 'C') return writeMneImmediate(MVI_C, hex, out);
     return 0;
   }
+
   if (!strcmp(mne, "MOV")) {
     if(!strcmp(mod, "A,B")) return fputc(MOV_AB, out);
     if(!strcmp(mod, "A,C")) return fputc(MOV_AC, out);
@@ -75,6 +114,7 @@ int decodeLine(char *mne, char *mod, short hex, FILE *out) {
 
   if (!strcmp(mne, "HLT")) return fputc(HLT, out);
 
+  fprintf(stderr, "Error: Mnemonic not recognised: \"%s\"\n", mne);
   return 0;
 }
 
@@ -84,7 +124,9 @@ void assemble(FILE *in, FILE *out) {
   char mod[4] = { 0 };
   short hex = 0;
   int scan = 0;
+  int line_no = 0;
   while(fgets(line, 255, in) != NULL) {
+    line_no++;
     scan = sscanf(line, "%3s %[ABC,]%2hXH", mne, mod, &hex);
     if(scan == 3) {
       decodeLine(mne, mod, hex, out);
@@ -100,7 +142,7 @@ void assemble(FILE *in, FILE *out) {
       decodeLine(mne, mod, hex, out);
       continue;
     }
-
+    fprintf(stderr, "Error: unrecognised line (%d): \"%s\"\n", line_no, line);
   }
 }
 
@@ -120,7 +162,7 @@ int main(int argc, char *argv[]) {
 
   char *outfile = (argc < 3) ? DEFAULT_OUTFILE : argv[2];
 
-  FILE *output = fopen(outfile, "w");
+  FILE *output = fopen(outfile, "wb");
 
   if (output == NULL) {
     fprintf(stderr, "Error opening output file \"%s\"\n", outfile);
