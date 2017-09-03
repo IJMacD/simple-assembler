@@ -85,6 +85,10 @@ int decodeLine(char *mne, char *mod, short hex, FILE *out) {
     return 0;
   }
 
+  if (!strcmp(mne, "ANI")) return writeMneImmediate(ANI, hex, out);
+  if (!strcmp(mne, "XRI")) return writeMneImmediate(XRI, hex, out);
+  if (!strcmp(mne, "ORI")) return writeMneImmediate(ORI, hex, out);
+
   if (!strcmp(mne, "STA")) return writeMneAddress(STA, hex, out);
 
   if (!strcmp(mne, "MVI")) {
@@ -127,7 +131,7 @@ void assemble(FILE *in, FILE *out) {
   int line_no = 0;
   while(fgets(line, 255, in) != NULL) {
     line_no++;
-    scan = sscanf(line, "%3s %[ABC,]%2hXH", mne, mod, &hex);
+    scan = sscanf(line, "%3s %[ABC],%2hXH", mne, mod, &hex);
     if(scan == 3) {
       decodeLine(mne, mod, hex, out);
       continue;
